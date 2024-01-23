@@ -50,7 +50,7 @@ for($i = 0; $i < $count; $i++) {
     $qrcode = new QrReader($_FILES['files']['tmp_name'][$i]);
     $text = $qrcode->text();
     curl($text);
-    $result .= "<a href=". $text . ">" . $text . "</a></br>";
+    $result .= ($text != '') ? "<a href=". $text . ">" . $text . "</a></br>" : $_FILES['files']['name'][$i];
 }
 
 echo $result;
