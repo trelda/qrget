@@ -1,5 +1,9 @@
 <?php
+ini_set('error_reporting', E_ALL);
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
 require __DIR__ . "/vendor/autoload.php";
+require __DIR__ . "/connect.php";
 use Zxing\QrReader;
 
 $count = count($_FILES['files']['tmp_name']);
@@ -44,13 +48,35 @@ function curl($url) {
     curl_close($ch);
 };
 
+function addRecord($text) {
+    global $mysqli;
+    $text = str_replace("'", "", $text);
+    $query = "insert into links (url) values ('".$text."')";
+    try {
+        $mysqli->query($query);
+    } catch (Exception $e) {
+        return false;
+    }
+    return true;
+}
+
 $result = '';
 
 for($i = 0; $i < $count; $i++) {
     $qrcode = new QrReader($_FILES['files']['tmp_name'][$i]);
     $text = $qrcode->text();
-    curl($text);
-    $result .= ($text != '') ? "<a href=". $text . ">" . $text . "</a></br>" : $_FILES['files']['name'][$i];
+    $response = $_FILES['files']['name'][$i];
+    if ($text != '') {
+        if (addRecord($text)) {
+            curl($text);
+            $response = $text;
+        } else {
+            $response = 'Присутствует в базе';
+        }
+    } else {
+        $response = $_FILES['files']['name'][$i]. ' - Код не распознан';
+    }
+    $result .= ($text != '') ? "<a href=". $text . ">" . $response . "</a></br>" : $response . "</br>";
 }
 
 echo $result;
